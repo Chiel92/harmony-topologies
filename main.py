@@ -15,14 +15,14 @@ tones = [
     'C',
     'C#',
     'D',
-    'D#',
+    'Eb',
     'E',
     'F',
     'F#',
     'G',
-    'G#',
+    'Ab',
     'A',
-    'A#',
+    'Bb',
     'B'
 ]
 
@@ -32,15 +32,39 @@ progressions = set()
 progressions.add((0, 0))
 
 
-def add_consonants(tone_set):
-    for _, tone in list(tone_set):
-        consonants.add((tone, (tone - 4) % 12))
-        consonants.add((tone, (tone - 5) % 12))
-        consonants.add((tone, (tone - 7) % 12))
+def expand_consonants(link_set):
+    for _, tone in list(link_set):
+        # Consonance relations are undirected, so we sort the pairs to avoid duplicates
+        consonants.add(tuple(sorted([tone, (tone - 3) % 12])))
+        consonants.add(tuple(sorted([tone, (tone - 4) % 12])))
+        consonants.add(tuple(sorted([tone, (tone - 5) % 12])))
+        consonants.add(tuple(sorted([tone, (tone - 7) % 12])))
+        consonants.add(tuple(sorted([tone, (tone + 3) % 12])))
+        consonants.add(tuple(sorted([tone, (tone + 4) % 12])))
+        consonants.add(tuple(sorted([tone, (tone + 5) % 12])))
+        consonants.add(tuple(sorted([tone, (tone + 7) % 12])))
 
 
-def add_progressions(tone_set):
-    for _, tone in list(tone_set):
+def add_consonants_links(tone_set):
+    for tone in list(tone_set):
+        # Consonance relations are undirected, so we sort the pairs to avoid duplicates
+        targets = [
+            (tone - 3) % 12,
+            (tone - 4) % 12,
+            (tone - 5) % 12,
+            (tone - 7) % 12,
+            (tone + 3) % 12,
+            (tone + 4) % 12,
+            (tone + 5) % 12,
+            (tone + 7) % 12,
+        ]
+        for target in targets:
+            if target in tone_set:
+                consonants.add(tuple(sorted([tone, target])))
+
+
+def expand_progressions(link_set):
+    for _, tone in list(link_set):
         progressions.add((tone, (tone - 1) % 12))
         progressions.add((tone, (tone - 5) % 12))
 
@@ -76,10 +100,10 @@ def print_progressions():
 
 
 def run():
-    add_progressions(progressions)
-    add_consonants(consonants)
-    add_progressions(consonants)
-    add_consonants(progressions)
+    expand_consonants(consonants)
+    expand_progressions(consonants)
+    expand_consonants(progressions)
+    add_consonants_links(reachable_by_consonance().union(reachable_by_progression()))
 
     say('digraph harmony {')
     print_consonants()
